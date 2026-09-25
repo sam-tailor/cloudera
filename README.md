@@ -1,0 +1,1 @@
+Created via the EaC self-service portal's one-click New Repository flow, approved by System Administrator. CI (.github/workflows/ci-governance.yml) is scaffolded directly into this repo, matching the golden-path shape defined in ea-governance-hub - commitlint and a Trivy scan run on every push.
