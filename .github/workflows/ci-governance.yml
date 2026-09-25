@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install commitlint (only if this repo has its own config)
+        run: |
+          if [ -f commitlint.config.js ] || [ -f .commitlintrc.json ]; then
+            npm install --no-save @commitlint/cli @commitlint/config-conventional
+            echo "HAS_COMMITLINT_CONFIG=true" >> "$GITHUB_ENV"
+          else
+            echo "No commitlint.config.js/.commitlintrc.json in this repo - skipping (scaffold hasn't added one yet)."
+            echo "HAS_COMMITLINT_CONFIG=false" >> "$GITHUB_ENV"
+          fi
+      - name: Run commitlint
+        if: env.HAS_COMMITLINT_CONFIG == 'true'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Trivy vulnerability scanner in IaC mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: false
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
